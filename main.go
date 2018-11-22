@@ -126,13 +126,16 @@ func main() {
 		{
 			Name:  "import",
 			Usage: "Import data from device",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{Name: "noop, n", Usage: "Dump data only. Don't save to database"},
+			},
 			Action: func(c *cli.Context) error {
 				db, device, err := setup(c.GlobalString("dbpath"), c.GlobalString("port"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 
-				err = tools.Import(db, device)
+				err = tools.Import(db, device, c.Bool("noop"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}

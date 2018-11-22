@@ -26,7 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Import(db model.Datastore, device device.Device) error {
+func Import(db model.Datastore, device device.Device, noop bool) error {
 	err := device.ResetDevice()
 	if err != nil {
 		return fmt.Errorf("Failed to reset device: %s", err)
@@ -74,7 +74,15 @@ func Import(db model.Datastore, device device.Device) error {
 
 		for i, rec := range data {
 			rec.DateTime = startTime.Add(time.Second * time.Duration(i))
-			log.Debugf("Record %d - %s", i, rec)
+			if noop {
+				fmt.Printf("Record %d - %s\n", i, rec)
+			} else {
+				log.Debugf("Record %d - %s", i, rec)
+			}
+		}
+
+		if noop {
+			return nil
 		}
 
 		log.Infof("Saving records to database")

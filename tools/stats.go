@@ -77,7 +77,7 @@ func Stats(db model.Datastore) error {
 	spo2SD = math.Sqrt(spo2SD / n)
 
 	fmt.Printf("------------------------------------------------------\n")
-	fmt.Printf("Start: %s End: %s\n", records[0].DateTime.Format(time.Stamp), records[len(records)-1].DateTime.Format(time.Stamp))
+	fmt.Printf("Start: %s End: %s\n", records[0].DateTime.Format("2006-01-02 15:04:05"), records[len(records)-1].DateTime.Format("2006-01-02 15:04:05"))
 	fmt.Printf("------------------------------------------------------\n")
 	fmt.Printf("Total Records: %d (n = %d, bad data = %d)\n", len(records), int(n), len(records)-int(n))
 	fmt.Printf("Average SpO2 %%: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Blue(spo2Mean)), spo2Min, spo2Max, spo2SD)

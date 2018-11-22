@@ -60,12 +60,16 @@ func (c *CMS50) makeCommand() []byte {
 
 func (c *CMS50) readBytes(n int) ([]byte, error) {
 	buf := make([]byte, n)
-	n, err := c.device.Read(buf)
+	read, err := c.device.Read(buf)
 	if err != nil && err != io.EOF {
 		return nil, err
 	}
 
-	return buf[:n], nil
+	if read == 0 {
+		return nil, fmt.Errorf("Read 0 bytes from device. Is it turned on?")
+	}
+
+	return buf[:read], nil
 }
 
 func (c *CMS50) execCommand(command uint8) error {

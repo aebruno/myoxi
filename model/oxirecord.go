@@ -31,7 +31,7 @@ type OxiRecord struct {
 }
 
 func (r *OxiRecord) String() string {
-	return fmt.Sprintf("DateTime=%s Pulse=%d SPO2=%d", r.DateTime, r.Pulse, r.Spo2)
+	return fmt.Sprintf("DateTime=%s Pulse=%d SPO2=%d", r.DateTime.Format("2006-01-02 15:04:05"), r.Pulse, r.Spo2)
 }
 
 func (db *DB) SaveRecords(records []*OxiRecord) error {
