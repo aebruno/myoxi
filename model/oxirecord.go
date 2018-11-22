@@ -77,6 +77,8 @@ func (db *DB) FetchRecords(from, to time.Time) ([]*OxiRecord, error) {
 		args = append(args, to)
 	}
 
+    query += ` order by date_time asc`
+
 	log.Debugf("Fetch Records args: %v query: %s", args, query)
 
 	data := []*OxiRecord{}

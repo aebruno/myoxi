@@ -23,7 +23,7 @@ import (
 	"github.com/aebruno/myoxi/device"
 )
 
-func Status(device device.Device) error {
+func DeviceInfo(device device.Device) error {
 	err := device.ResetDevice()
 	if err != nil {
 		return fmt.Errorf("Failed to reset device: %s", err)

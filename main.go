@@ -141,7 +141,24 @@ func main() {
 			},
 		},
 		{
-			Name:  "status",
+			Name:  "stats",
+			Usage: "Display database stats",
+			Action: func(c *cli.Context) error {
+				db, err := initDB(c.GlobalString("dbpath"))
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+
+				err = tools.Stats(db)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "device",
 			Usage: "Display information about device",
 			Action: func(c *cli.Context) error {
 				device, err := connectDevice(c.GlobalString("port"))
@@ -149,7 +166,7 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 
-				err = tools.Status(device)
+				err = tools.DeviceInfo(device)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
