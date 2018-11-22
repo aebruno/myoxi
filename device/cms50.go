@@ -19,6 +19,7 @@ package device
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -55,6 +56,7 @@ const (
 type CMS50 struct {
 	device       io.ReadWriter
 	model        string
+	user         string
 	sessionCount uint8
 }
 
@@ -151,6 +153,43 @@ func (c *CMS50) ResetDevice() error {
 	return nil
 }
 
+func (c *CMS50) GetUser() (string, error) {
+	if len(c.user) > 0 {
+		return c.user, nil
+	}
+
+	err := c.execCommand(CommandGetUserInfo)
+	if err != nil {
+		return "", err
+	}
+
+	res, err := c.readBytes(100)
+	if err != nil {
+		return "", err
+	}
+
+	if res[0] != 0x05 {
+		return "", fmt.Errorf("Unknown result for CommandGetUserInfo: % x", res)
+	}
+
+	log.Debugf("Received %d bytes for user: % x", len(res), res)
+
+	for i := 3; i < len(res); i++ {
+		res[i] ^= 0x80
+	}
+
+	user := bytes.TrimRightFunc(res[3:], func(r rune) bool {
+		if r == 0x00 {
+			return true
+		}
+		return false
+	})
+
+	c.user = strings.TrimSpace(string(user))
+
+	return c.user, nil
+}
+
 func (c *CMS50) GetModel() (string, error) {
 	if len(c.model) > 0 {
 		return c.model, nil
@@ -172,7 +211,7 @@ func (c *CMS50) GetModel() (string, error) {
 
 	log.Debugf("Received %d bytes for model string: % x", len(res), res)
 
-	for i := 3; i < 9; i++ {
+	for i := 3; i < len(res); i++ {
 		res[i] ^= 0x80
 	}
 

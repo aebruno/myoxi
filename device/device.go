@@ -31,4 +31,5 @@ type Device interface {
 	GetSessionDuration(session uint8) (time.Duration, error)
 	GetSessionTime(session uint8) (time.Time, error)
 	GetSessionData(session uint8) ([]*model.OxiRecord, error)
+	GetUser() (string, error)
 }

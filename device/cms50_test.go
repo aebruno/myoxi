@@ -37,6 +37,8 @@ func (c *MockCMS50) Read(p []byte) (int, error) {
 		res = []byte{0xc, 0x80}
 	case CommandHello2:
 		res = []byte{0xc, 0x80}
+	case CommandGetUserInfo:
+		res = []byte{0x05, 0x80, 0x80, 0xf5, 0xf3, 0xe5, 0xf2, 0x80, 0x80}
 	case CommandGetOximeterModel:
 		res = []byte{0x02, 0x80, 0x80, 0xb5, 0xb0, 0xc6, 0xa0, 0xa0, 0xa0, 0x02, 0x81, 0xff, 0xa0, 0x80, 0x80, 0x80, 0x80, 0x80}
 	case CommandGetSessionCount:
@@ -87,6 +89,18 @@ func TestReset(t *testing.T) {
 	err := cms.ResetDevice()
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	cms := newTestDevice()
+	user, err := cms.GetUser()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if user != "user" {
+		t.Errorf("Invalid user: got '% x' should be '% x'", user, "user")
 	}
 }
 

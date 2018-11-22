@@ -29,6 +29,11 @@ func Status(device device.Device) error {
 		return fmt.Errorf("Failed to reset device: %s", err)
 	}
 
+	user, err := device.GetUser()
+	if err != nil {
+		return fmt.Errorf("Failed to get user: %s", err)
+	}
+
 	model, err := device.GetModel()
 	if err != nil {
 		return fmt.Errorf("Failed to get device model: %s", err)
@@ -40,6 +45,7 @@ func Status(device device.Device) error {
 	}
 
 	fmt.Printf("Device model: %s\n", model)
+	fmt.Printf("Userinfo: %s\n", user)
 	fmt.Printf("Session count: %d\n", count)
 	fmt.Printf("------------------------------\n")
 
