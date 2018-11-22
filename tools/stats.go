@@ -43,7 +43,7 @@ func (d *DesaturationEvent) String() string {
 	return fmt.Sprintf("%s lasting %s desaturation %.2f to %.2f", d.start.Format("01-02 15:04:05"), d.end.Sub(d.start), d.avg120, mean)
 }
 
-func computeODI(data []*model.OxiRecord) (float64, []*DesaturationEvent) {
+func computeODI(data []*model.OxiRecord) (float64, time.Duration, []*DesaturationEvent) {
 	nullTime := time.Time{}
 	avg120 := float64(95)
 	sum120 := 0
@@ -54,6 +54,7 @@ func computeODI(data []*model.OxiRecord) (float64, []*DesaturationEvent) {
 
 	events := make([]*DesaturationEvent, 0)
 	curEvent := &DesaturationEvent{}
+    ct90 := 0
 
 	idx := 0
 	processHours := true
@@ -75,6 +76,10 @@ func computeODI(data []*model.OxiRecord) (float64, []*DesaturationEvent) {
 			if rec.Spo2 < 65 {
 				continue
 			}
+
+            if rec.Spo2 < 90 {
+                ct90++
+            }
 
 			if avg120-float64(rec.Spo2) >= 4 {
 				log.Debugf("Oxygen desaturation event at %s: %d (%.2f 120s avg)", rec.DateTime.Format("01-02 15:04:05"), rec.Spo2, avg120)
@@ -118,7 +123,7 @@ func computeODI(data []*model.OxiRecord) (float64, []*DesaturationEvent) {
 		}
 	}
 
-	return odi, events
+	return odi, time.Duration(time.Second * time.Duration(ct90)), events
 }
 
 func Stats(db model.Datastore) error {
@@ -171,7 +176,7 @@ func Stats(db model.Datastore) error {
 	pulseSD = math.Sqrt(pulseSD / n)
 	spo2SD = math.Sqrt(spo2SD / n)
 
-	odi, events := computeODI(records)
+	odi, ct90, events := computeODI(records)
 
 	fmt.Printf("------------------------------------------------------\n")
 	fmt.Printf("Start: %s End: %s\n", records[0].DateTime.Format("2006-01-02 15:04:05"), records[len(records)-1].DateTime.Format("2006-01-02 15:04:05"))
@@ -180,6 +185,7 @@ func Stats(db model.Datastore) error {
 	fmt.Printf("Average SpO2 %%: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Blue(spo2Mean)), spo2Min, spo2Max, spo2SD)
 	fmt.Printf("Average Pulse Rate: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Red(pulseMean)), pulseMin, pulseMax, pulseSD)
 	fmt.Printf("ODI: %.2f\n", Bold(Blue(odi)))
+	fmt.Printf("CT90: %s\n", Bold(ct90))
 	fmt.Printf("Oxygen Desaturation Events = %d\n", len(events))
 	fmt.Printf("------------------------------------------------------\n")
 	for _, e := range events {
