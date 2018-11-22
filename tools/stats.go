@@ -54,7 +54,7 @@ func computeODI(data []*model.OxiRecord) (float64, time.Duration, []*Desaturatio
 
 	events := make([]*DesaturationEvent, 0)
 	curEvent := &DesaturationEvent{}
-    ct90 := 0
+	ct90 := 0
 
 	idx := 0
 	processHours := true
@@ -77,9 +77,9 @@ func computeODI(data []*model.OxiRecord) (float64, time.Duration, []*Desaturatio
 				continue
 			}
 
-            if rec.Spo2 < 90 {
-                ct90++
-            }
+			if rec.Spo2 < 90 {
+				ct90++
+			}
 
 			if avg120-float64(rec.Spo2) >= 4 {
 				log.Debugf("Oxygen desaturation event at %s: %d (%.2f 120s avg)", rec.DateTime.Format("01-02 15:04:05"), rec.Spo2, avg120)
