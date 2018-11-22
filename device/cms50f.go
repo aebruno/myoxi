@@ -31,12 +31,6 @@ import (
 	"github.com/tarm/serial"
 )
 
-// http://www.cpaptalk.com/viewtopic/t65978/CMS50x-Serial-Programming-Information.html
-// https://www.tranzoa.net/~alex/blog/images/Communication%20protocol.pdf
-// https://www.tranzoa.net/~alex/blog/?p=371
-// https://vinc.cc/projects/oximon/
-// http://www.atbrask.dk/?p=263
-
 const (
 	CommandHello1              = 0xa7
 	CommandHello2              = 0xa2
