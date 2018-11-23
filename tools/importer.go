@@ -26,7 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Import(db model.Datastore, device device.Device, noop bool) error {
+func Import(db model.Datastore, device device.Device, noop, forceOverwrite bool) error {
 	err := device.ResetDevice()
 	if err != nil {
 		return fmt.Errorf("Failed to reset device: %s", err)
@@ -45,6 +45,11 @@ func Import(db model.Datastore, device device.Device, noop bool) error {
 	}
 
 	for i := uint8(0); i < count; i++ {
+		deviceModel, err := device.GetModel()
+		if err != nil {
+			return fmt.Errorf("Failed to get device model: %s", err)
+		}
+
 		duration, err := device.GetSessionDuration(i)
 		if err != nil {
 			return fmt.Errorf("Failed to fetch session duration: %s", err)
@@ -55,7 +60,28 @@ func Import(db model.Datastore, device device.Device, noop bool) error {
 			return fmt.Errorf("Failed to fetch session time: %s", err)
 		}
 
-		log.Infof("Importing data for session %d - %s (%s)", i, startTime, duration)
+		sessionID := int64(0)
+
+		if !noop {
+			session, err := db.FetchSessionByStartTime(startTime)
+			if err == nil {
+				if !forceOverwrite {
+					return fmt.Errorf("Session already exists in database. Use --force to overwrite: %s", session)
+				}
+				sessionID = session.ID
+			} else if err == model.ErrNotFound {
+				session = &model.Session{StartTime: startTime, Model: deviceModel, Seconds: int(duration.Seconds())}
+				err := db.SaveSession(session)
+				if err != nil {
+					return fmt.Errorf("Failed to save session in database: %s", err)
+				}
+				sessionID = session.ID
+			} else {
+				return fmt.Errorf("Failed to check for existing session in database: %s", err)
+			}
+		}
+
+		log.Infof("Importing data for session %d - %s (%s)", sessionID, startTime, duration)
 		data, err := device.GetSessionData(i)
 		if err != nil {
 			return fmt.Errorf("Failed to connect to device: %s", err)
@@ -73,6 +99,7 @@ func Import(db model.Datastore, device device.Device, noop bool) error {
 		}
 
 		for i, rec := range data {
+			rec.SessionID = sessionID
 			rec.DateTime = startTime.Add(time.Second * time.Duration(i))
 			if noop {
 				fmt.Printf("Record %d - %s\n", i, rec)

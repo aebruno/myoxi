@@ -25,9 +25,10 @@ import (
 )
 
 type OxiRecord struct {
-	DateTime time.Time `db:"date_time" json:"date_time"`
-	Pulse    uint8     `db:"pulse" json:"pulse"`
-	Spo2     uint8     `db:"spo2" json:"spo2"`
+	DateTime  time.Time `db:"date_time" json:"date_time"`
+	SessionID int64     `db:"session_id" json:"session_id"`
+	Pulse     uint8     `db:"pulse" json:"pulse"`
+	Spo2      uint8     `db:"spo2" json:"spo2"`
 }
 
 func (r *OxiRecord) String() string {
@@ -43,8 +44,8 @@ func (db *DB) SaveRecords(records []*OxiRecord) error {
 
 	for _, record := range records {
 		_, err := tx.NamedExec(`
-            replace into oxi_record (date_time, pulse, spo2) 
-            values (:date_time, :pulse, :spo2)`, record)
+            replace into oxi_record (date_time, session_id, pulse, spo2) 
+            values (:date_time, :session_id, :pulse, :spo2)`, record)
 		if err != nil {
 			return err
 		}
@@ -58,6 +59,7 @@ func (db *DB) FetchRecords(from, to time.Time) ([]*OxiRecord, error) {
 	query := `
         select
 			date_time,
+            session_id,
 			pulse,
             spo2
         from oxi_record

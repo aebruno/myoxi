@@ -128,6 +128,7 @@ func main() {
 			Usage: "Import data from device",
 			Flags: []cli.Flag{
 				&cli.BoolFlag{Name: "noop, n", Usage: "Dump data only. Don't save to database"},
+				&cli.BoolFlag{Name: "force, f", Usage: "Force overwrite session if exists"},
 			},
 			Action: func(c *cli.Context) error {
 				db, device, err := setup(c.GlobalString("dbpath"), c.GlobalString("port"))
@@ -135,7 +136,7 @@ func main() {
 					return cli.NewExitError(err, 1)
 				}
 
-				err = tools.Import(db, device, c.Bool("noop"))
+				err = tools.Import(db, device, c.Bool("noop"), c.Bool("force"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}

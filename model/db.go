@@ -18,6 +18,7 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -25,16 +26,27 @@ import (
 )
 
 const (
+	SessionSchema = `
+		create table if not exists session 
+		(id integer primary key, start_time datetime unique, model string, duration_seconds integer)
+	`
+
 	OxiRecordSchema = `
 		create table if not exists oxi_record 
-		(date_time datetime primary key, pulse integer, spo2 integer)
+		(date_time datetime primary key, session_id integer not null, pulse integer, spo2 integer)
 	`
 )
+
+var ErrNotFound = errors.New("Record not found in database")
 
 type Datastore interface {
 	Initialize() error
 	SaveRecords(records []*OxiRecord) error
 	FetchRecords(from, to time.Time) ([]*OxiRecord, error)
+	SaveSession(session *Session) error
+	FetchLastSession() (*Session, error)
+	FetchSessionByStartTime(start time.Time) (*Session, error)
+	FetchAllSessions() ([]*Session, error)
 }
 
 type DB struct {
@@ -56,7 +68,12 @@ func NewDB(driver, dsn string) (Datastore, error) {
 }
 
 func (db *DB) Initialize() error {
-	_, err := db.Exec(OxiRecordSchema)
+	_, err := db.Exec(SessionSchema)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(OxiRecordSchema)
 	if err != nil {
 		return err
 	}
