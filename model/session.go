@@ -81,7 +81,7 @@ func (db *DB) FetchSessionByStartTime(start time.Time) (*Session, error) {
 	return session, nil
 }
 
-func (db *DB) FetchLastSession() (*Session, error) {
+func (db *DB) FetchLatestSession() (*Session, error) {
 	query := `
         select
 			id,
@@ -91,6 +91,31 @@ func (db *DB) FetchLastSession() (*Session, error) {
         from session
         order by start_time desc
         limit 1
+	`
+
+	log.Debugf("Fetch Last Session query: %s", query)
+
+	session := &Session{}
+	err := db.Get(session, query)
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
+func (db *DB) FetchPreviousSession() (*Session, error) {
+	query := `
+        select
+			id,
+			start_time,
+			model,
+            duration_seconds
+        from session
+        order by start_time desc
+        limit 1 offset 1
 	`
 
 	log.Debugf("Fetch Last Session query: %s", query)

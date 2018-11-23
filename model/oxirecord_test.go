@@ -31,12 +31,12 @@ func TestOxiRecord(t *testing.T) {
 	start := time.Now()
 
 	data := []*OxiRecord{
-		&OxiRecord{DateTime: start.Add(time.Second * 1), Pulse: 77, Spo2: 98},
-		&OxiRecord{DateTime: start.Add(time.Second * 2), Pulse: 78, Spo2: 96},
-		&OxiRecord{DateTime: start.Add(time.Second * 3), Pulse: 76, Spo2: 95},
-		&OxiRecord{DateTime: start.Add(time.Second * 4), Pulse: 79, Spo2: 98},
-		&OxiRecord{DateTime: start.Add(time.Second * 5), Pulse: 77, Spo2: 99},
-		&OxiRecord{DateTime: start.Add(time.Second * 6), Pulse: 79, Spo2: 94},
+		&OxiRecord{DateTime: start.Add(time.Second * 1), Pulse: 77, Spo2: 98, SessionID: 1},
+		&OxiRecord{DateTime: start.Add(time.Second * 2), Pulse: 78, Spo2: 96, SessionID: 1},
+		&OxiRecord{DateTime: start.Add(time.Second * 3), Pulse: 76, Spo2: 95, SessionID: 1},
+		&OxiRecord{DateTime: start.Add(time.Second * 4), Pulse: 79, Spo2: 98, SessionID: 1},
+		&OxiRecord{DateTime: start.Add(time.Second * 5), Pulse: 77, Spo2: 99, SessionID: 1},
+		&OxiRecord{DateTime: start.Add(time.Second * 6), Pulse: 79, Spo2: 94, SessionID: 1},
 	}
 
 	err = db.SaveRecords(data)
@@ -88,5 +88,14 @@ func TestOxiRecord(t *testing.T) {
 
 	if len(records) != 0 {
 		t.Errorf("Invalid number of records returned. Got %d wanted %d", len(records), 0)
+	}
+
+	records, err = db.FetchRecordsBySessionID(1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(records) != len(data) {
+		t.Errorf("Invalid number of records returned for fetch by sessionID. Got %d wanted %d", len(records), len(data))
 	}
 }

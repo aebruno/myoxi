@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/aebruno/myoxi/device"
 	"github.com/aebruno/myoxi/model"
@@ -147,16 +148,49 @@ func main() {
 		{
 			Name:  "stats",
 			Usage: "Display database stats",
+			Flags: []cli.Flag{
+				&cli.BoolFlag{Name: "all, a", Usage: "Display stats for all data"},
+				&cli.BoolFlag{Name: "prev, p", Usage: "Display stats for previous session"},
+				&cli.BoolFlag{Name: "week, w", Usage: "Display stats for last week"},
+				&cli.BoolFlag{Name: "month, m", Usage: "Display stats for last month"},
+				&cli.BoolFlag{Name: "quarter, q", Usage: "Display stats for last quarter"},
+				&cli.BoolFlag{Name: "year, y", Usage: "Display stats for last year"},
+			},
 			Action: func(c *cli.Context) error {
 				db, err := initDB(c.GlobalString("dbpath"))
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
 
-				err = tools.Stats(db)
+				now := time.Now()
+				var records []*model.OxiRecord
+				if c.Bool("all") {
+					records, err = db.FetchRecords(time.Time{}, time.Time{})
+				} else if c.Bool("prev") {
+					session, err := db.FetchPreviousSession()
+					if err != nil {
+						return cli.NewExitError(err, 1)
+					}
+					records, err = db.FetchRecordsBySessionID(session.ID)
+				} else if c.Bool("week") {
+					records, err = db.FetchRecords(now.Add(-24*7*time.Hour), now)
+				} else if c.Bool("month") {
+					records, err = db.FetchRecords(now.Add(-24*30*time.Hour), now)
+				} else if c.Bool("year") {
+					records, err = db.FetchRecords(now.Add(-24*365*time.Hour), now)
+				} else {
+					session, err := db.FetchLatestSession()
+					if err != nil {
+						return cli.NewExitError(err, 1)
+					}
+					records, err = db.FetchRecordsBySessionID(session.ID)
+				}
+
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
+
+				tools.ComputeAndPrintStats(records)
 
 				return nil
 			},

@@ -91,3 +91,25 @@ func (db *DB) FetchRecords(from, to time.Time) ([]*OxiRecord, error) {
 
 	return data, nil
 }
+
+func (db *DB) FetchRecordsBySessionID(sessionID int64) ([]*OxiRecord, error) {
+	query := `
+        select
+			date_time,
+            session_id,
+			pulse,
+            spo2
+        from oxi_record
+        where session_id = ?
+	`
+
+	log.Debugf("Fetch Records by session id query: %s", query)
+
+	data := []*OxiRecord{}
+	err := db.Select(&data, query, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}

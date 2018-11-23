@@ -56,17 +56,17 @@ func TestSession(t *testing.T) {
 		t.Errorf("Invalid number of sessions returned. Got %d wanted %d", len(sessions), len(data))
 	}
 
-	session, err := db.FetchLastSession()
+	session, err := db.FetchLatestSession()
 	if err != nil {
 		t.Error(err)
 	}
 
 	if session.ID != 1 {
-		t.Errorf("Invalid session ID for last session returned. Got %d wanted %d", session.ID, 1)
+		t.Errorf("Invalid session ID for latest session returned. Got %d wanted %d", session.ID, 1)
 	}
 
 	if session.StartTime.UTC() != data[0].StartTime.UTC() {
-		t.Errorf("Invalid start time for last session returned. Got %s wanted %s", session.StartTime.UTC(), data[0].StartTime.UTC())
+		t.Errorf("Invalid start time for latest session returned. Got %s wanted %s", session.StartTime.UTC(), data[0].StartTime.UTC())
 	}
 
 	session, err = db.FetchSessionByStartTime(start)
@@ -76,5 +76,14 @@ func TestSession(t *testing.T) {
 
 	if session.ID != 1 {
 		t.Errorf("Invalid session ID for session returned. Got %d wanted %d", session.ID, 1)
+	}
+
+	session, err = db.FetchPreviousSession()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if session.ID != 2 {
+		t.Errorf("Invalid session ID for previous session returned. Got %d wanted %d", session.ID, 1)
 	}
 }

@@ -34,6 +34,22 @@ type DesaturationEvent struct {
 	records []*model.OxiRecord
 }
 
+type Stats struct {
+	totalRecords int
+	badRecords   int
+	spo2Min      uint8
+	spo2Max      uint8
+	spo2Mean     float64
+	spo2SD       float64
+	pulseMin     uint8
+	pulseMax     uint8
+	pulseMean    float64
+	pulseSD      float64
+	odi          float64
+	ct90         time.Duration
+	events       []*DesaturationEvent
+}
+
 func (d *DesaturationEvent) String() string {
 	sum := 0
 	for _, rec := range d.records {
@@ -126,17 +142,10 @@ func computeODI(data []*model.OxiRecord) (float64, time.Duration, []*Desaturatio
 	return odi, time.Duration(time.Second * time.Duration(ct90)), events
 }
 
-func Stats(db model.Datastore) error {
-	var pulseMin, pulseMax, spo2Min, spo2Max uint8
+func ComputeStats(records []*model.OxiRecord) *Stats {
 	var n, pulseSum, spo2Sum float64
-	var pulseMean, pulseSD, spo2Mean, spo2SD float64
-
-	spo2Min, pulseMin = math.MaxUint8, math.MaxUint8
-
-	records, err := db.FetchRecords(time.Time{}, time.Time{})
-	if err != nil {
-		return err
-	}
+	stats := &Stats{}
+	stats.spo2Min, stats.pulseMin = math.MaxUint8, math.MaxUint8
 
 	for _, rec := range records {
 		// Throw away data that's not within reasonable physical limits
@@ -150,48 +159,54 @@ func Stats(db model.Datastore) error {
 
 		pulseSum += float64(rec.Pulse)
 		spo2Sum += float64(rec.Spo2)
-		if rec.Pulse > pulseMax {
-			pulseMax = rec.Pulse
+		if rec.Pulse > stats.pulseMax {
+			stats.pulseMax = rec.Pulse
 		}
-		if rec.Spo2 > spo2Max {
-			spo2Max = rec.Spo2
+		if rec.Spo2 > stats.spo2Max {
+			stats.spo2Max = rec.Spo2
 		}
-		if rec.Pulse < pulseMin {
-			pulseMin = rec.Pulse
+		if rec.Pulse < stats.pulseMin {
+			stats.pulseMin = rec.Pulse
 		}
-		if rec.Spo2 < spo2Min {
-			spo2Min = rec.Spo2
+		if rec.Spo2 < stats.spo2Min {
+			stats.spo2Min = rec.Spo2
 		}
 		n++
 	}
 
-	pulseMean = pulseSum / n
-	spo2Mean = spo2Sum / n
+	stats.pulseMean = pulseSum / n
+	stats.spo2Mean = spo2Sum / n
 
 	for _, rec := range records {
-		pulseSD += math.Pow(float64(rec.Pulse)-pulseMean, 2)
-		spo2SD += math.Pow(float64(rec.Spo2)-spo2Mean, 2)
+		stats.pulseSD += math.Pow(float64(rec.Pulse)-stats.pulseMean, 2)
+		stats.spo2SD += math.Pow(float64(rec.Spo2)-stats.spo2Mean, 2)
 	}
 
-	pulseSD = math.Sqrt(pulseSD / n)
-	spo2SD = math.Sqrt(spo2SD / n)
+	stats.pulseSD = math.Sqrt(stats.pulseSD / n)
+	stats.spo2SD = math.Sqrt(stats.spo2SD / n)
 
-	odi, ct90, events := computeODI(records)
+	stats.odi, stats.ct90, stats.events = computeODI(records)
+	stats.totalRecords = int(n)
+	stats.badRecords = len(records) - int(n)
+
+	return stats
+}
+
+func ComputeAndPrintStats(records []*model.OxiRecord) {
+	stats := ComputeStats(records)
 
 	fmt.Printf("------------------------------------------------------\n")
 	fmt.Printf("Start: %s End: %s\n", records[0].DateTime.Format("2006-01-02 15:04:05"), records[len(records)-1].DateTime.Format("2006-01-02 15:04:05"))
 	fmt.Printf("------------------------------------------------------\n")
-	fmt.Printf("Total Records: %d (n = %d, bad data = %d)\n", len(records), int(n), len(records)-int(n))
-	fmt.Printf("Average SpO2 %%: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Blue(spo2Mean)), spo2Min, spo2Max, spo2SD)
-	fmt.Printf("Average Pulse Rate: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Red(pulseMean)), pulseMin, pulseMax, pulseSD)
-	fmt.Printf("ODI: %.2f\n", Bold(Blue(odi)))
-	fmt.Printf("CT90: %s\n", Bold(ct90))
-	fmt.Printf("Oxygen Desaturation Events = %d\n", len(events))
+	fmt.Printf("Total Records: %d (n = %d, bad data = %d)\n", len(records), stats.totalRecords, stats.badRecords)
+	fmt.Printf("Average SpO2 %%: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Blue(stats.spo2Mean)), stats.spo2Min, stats.spo2Max, stats.spo2SD)
+	fmt.Printf("Average Pulse Rate: %.2f (min: %d max: %d sd: %.2f)\n", Bold(Red(stats.pulseMean)), stats.pulseMin, stats.pulseMax, stats.pulseSD)
+	fmt.Printf("ODI: %.2f\n", Bold(Blue(stats.odi)))
+	fmt.Printf("CT90: %s\n", Bold(stats.ct90))
+	fmt.Printf("Oxygen Desaturation Events = %d\n", len(stats.events))
 	fmt.Printf("------------------------------------------------------\n")
-	for _, e := range events {
+	for _, e := range stats.events {
 		fmt.Printf("%s\n", e)
 	}
 	fmt.Printf("\n")
-
-	return nil
 }

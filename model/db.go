@@ -43,8 +43,10 @@ type Datastore interface {
 	Initialize() error
 	SaveRecords(records []*OxiRecord) error
 	FetchRecords(from, to time.Time) ([]*OxiRecord, error)
+	FetchRecordsBySessionID(id int64) ([]*OxiRecord, error)
 	SaveSession(session *Session) error
-	FetchLastSession() (*Session, error)
+	FetchLatestSession() (*Session, error)
+	FetchPreviousSession() (*Session, error)
 	FetchSessionByStartTime(start time.Time) (*Session, error)
 	FetchAllSessions() ([]*Session, error)
 }
