@@ -30,6 +30,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+var (
+	MyoxiVersion = "dev"
+)
+
 func connectDevice(port string) (device.Device, error) {
 	log.Infof("Using device port: %s", port)
 
@@ -108,7 +112,7 @@ func main() {
 	app.Name = "myoxi"
 	app.Authors = []cli.Author{cli.Author{Name: "Andrew E. Bruno", Email: "aeb@qnot.org"}}
 	app.Usage = "myoxi"
-	app.Version = "0.0.1"
+	app.Version = MyoxiVersion
 	app.Flags = []cli.Flag{
 		&cli.BoolFlag{Name: "debug,d", Usage: "Print debug messages"},
 		&cli.StringFlag{Name: "port, p", Usage: "Path to device port", Value: "/dev/ttyUSB0"},
