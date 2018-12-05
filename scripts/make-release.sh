@@ -1,7 +1,7 @@
 #!/bin/bash
 
 MYOXI_DIR='./.myoxi-release'
-VERSION=`git describe --long --tags --dirty --always | sed -e 's/^v//'`
+VERSION=`git describe --tags --always | sed -e 's/^v//'`
 for os in linux windows
 do
     for arch in amd64 386
@@ -16,7 +16,7 @@ do
         cp ./README.md ${REL_DIR}/
         cp ./CHANGELOG.md ${REL_DIR}/
         cp ./LICENSE ${REL_DIR}/
-        cd ${MYOXI_DIR} && zip -r ../${NAME}.zip ${NAME}
+        cd ${MYOXI_DIR} && zip -r ../releases/${NAME}.zip ${NAME}
         cd ..
         rm -Rf ${MYOXI_DIR}
         rm -f myoxi myoxi.exe
