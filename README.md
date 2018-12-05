@@ -103,6 +103,16 @@ to download the data before starting to record your next session.
 	   --year, -y     Display stats for last year
 ```
 
+## Building from source
+
+myoxi is written in Go and requires v1.11 or greater. Clone the repository:
+
+```
+    $ git clone https://github.com/aebruno/myoxi
+    $ cd myoxi
+    $ go build ./...
+```
+
 ## Acknowledgements
 
 The code in device/cms50f.go was adopted from the SleepLib oximeter loader
